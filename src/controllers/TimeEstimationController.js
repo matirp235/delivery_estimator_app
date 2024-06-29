@@ -1,4 +1,3 @@
-//Manages time estimation operations.
 const TimeEstimationService = require('../services/TimeEstimationService');
 
 class TimeEstimationController {

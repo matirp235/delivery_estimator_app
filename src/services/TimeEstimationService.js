@@ -1,49 +1,56 @@
-//Service for calculating delivery time.
 class TimeEstimationService {
-    constructor(noOfVehicles, maxSpeed, maxCarriableWeight) {
-      this.noOfVehicles = noOfVehicles;
-      this.maxSpeed = maxSpeed;
-      this.maxCarriableWeight = maxCarriableWeight;
-    }
-  
-    calculateDeliveryTime(packages, pkgId) {
-      const sortedPackages = packages.sort((a, b) => {
-        if (a.weight === b.weight) {
-          return a.distance - b.distance;
-        }
-        return b.weight - a.weight;
-      });
-  
-      let time = 0;
-      let remainingPackages = [...sortedPackages];
-      const vehicleCapacity = this.maxCarriableWeight;
-  
-      while (remainingPackages.length > 0) {
-        let currentLoad = 0;
-        let currentPackages = [];
-  
-        for (const pkg of remainingPackages) {
-          if (currentLoad + pkg.weight <= vehicleCapacity) {
-            currentLoad += pkg.weight;
-            currentPackages.push(pkg);
-          }
-        }
-  
-        remainingPackages = remainingPackages.filter(pkg => !currentPackages.includes(pkg));
-  
-        if (currentPackages.some(pkg => pkg.pkgId === pkgId)) {
-          const distance = currentPackages.find(pkg => pkg.pkgId === pkgId).distance;
-          time += (distance / this.maxSpeed) * 2;
-          break;
-        } else {
-          const distance = Math.max(...currentPackages.map(pkg => pkg.distance));
-          time += (distance / this.maxSpeed) * 2;
+  constructor(noOfVehicles, maxSpeed, maxCarriableWeight) {
+    this.noOfVehicles = noOfVehicles;
+    this.maxSpeed = maxSpeed;
+    this.maxCarriableWeight = maxCarriableWeight;
+    this.vehicles = Array(noOfVehicles).fill(0); // Initialize vehicle availability times
+  }
+
+  calculateDeliveryTime(packages, targetPkgId) {
+    // Sort packages by weight (descending). If weights are the same, sort by distance (ascending).
+    packages.sort((a, b) => {
+      if (a.weight === b.weight) {
+        return a.distance - b.distance;
+      }
+      return b.weight - a.weight;
+    });
+
+    let remainingPackages = [...packages];
+    let currentTime = 0;
+
+    while (remainingPackages.length > 0) {
+      const availableVehicleIndex = this.vehicles.indexOf(Math.min(...this.vehicles));
+      currentTime = this.vehicles[availableVehicleIndex];
+
+      let currentLoad = 0;
+      const currentTripPackages = [];
+
+      for (let i = 0; i < remainingPackages.length; i++) {
+        if (currentLoad + remainingPackages[i].weight <= this.maxCarriableWeight) {
+          currentLoad += remainingPackages[i].weight;
+          currentTripPackages.push(remainingPackages[i]);
         }
       }
-  
-      return time;
+
+      // Filter out the packages that have been assigned to the current trip
+      remainingPackages = remainingPackages.filter(pkg =>
+        !currentTripPackages.some(tripPkg => tripPkg.pkgId === pkg.pkgId)
+      );
+
+      const maxDistance = Math.max(...currentTripPackages.map(pkg => pkg.distance));
+      const tripTime = (maxDistance / this.maxSpeed) * 2; // Round trip time
+
+      this.vehicles[availableVehicleIndex] += tripTime;
+
+      // Check if the target package is in the current trip
+      const targetPackage = currentTripPackages.find(pkg => pkg.pkgId === targetPkgId);
+      if (targetPackage) {
+        return currentTime + (targetPackage.distance / this.maxSpeed);
+      }
     }
+
+    return 0; // Return 0 if the package was not found
   }
-  
-  module.exports = TimeEstimationService;
-  
+}
+
+module.exports = TimeEstimationService;

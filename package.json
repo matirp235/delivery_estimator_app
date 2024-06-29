@@ -4,10 +4,10 @@
     "description": "A command-line tool to estimate delivery costs for packages.",
     "main": "index.js",
     "scripts": {
-      "start": "node index.js"
+        "start": "node index.js"
     },
     "dependencies": {
-      "inquirer": "^8.2.0"
+        "cli-table3": "^0.6.5",
+        "inquirer": "^8.2.0"
     }
-  }
-  
+}

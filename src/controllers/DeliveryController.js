@@ -1,4 +1,3 @@
-// code for managing delivery-related operations.
 const OfferService = require('../services/OfferService');
 const CostService = require('../services/CostService');
 
